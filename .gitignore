@@ -1,23 +1,80 @@
-# Python virtual environments
+# ===== PYTHON & VIRTUAL ENVIRONMENTS =====
 venv/
 env/
+.venv/
+ENV/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
 
-# Local environments
-.env
-
-# Raw Datasets (Blocks the 464MB file)
-data/
-
-# Large Intermediate Caches (Blocks the 146MB and Parquet files)
-outputs/features.parquet
-outputs/embeddings.npy
-
-# Final Submission CSV (Keep local)
-outputs/submission.csv
-submission.csv
-
-# OS generated files
+# ===== IDE & EDITOR =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# ===== LOCAL ENVIRONMENT & SECRETS =====
+.env
+.env.local
+.env.*.local
+secrets/
+
+# ===== LARGE DATA FILES =====
+# Raw candidate data (if large)
+candidates.jsonl
+data/
+*.csv
+*.xlsx
+*.xls
+
+# ===== LARGE MODEL & CACHE FILES =====
+# Machine learning models
+outputs/ltr_model.txt
+outputs/ltr_model.pkl
+outputs/*.pkl
+outputs/*.h5
+
+# Feature matrices & embeddings
+outputs/features.parquet
+outputs/embeddings.npy
+outputs/anchor_embeddings.npy
+outputs/emb_ids.npy
+outputs/*.parquet
+outputs/*.npy
+
+# ===== KEEP IN REPO =====
+# !outcomes/submission.csv  (KEEP: final submission)
+# !outputs/anchor_texts.json (KEEP: reference data)
+# !.streamlit/config.toml   (KEEP: deployment config)
+
+# ===== OS-SPECIFIC =====
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# ===== JUPYTER & NOTEBOOKS =====
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ===== STREAMLIT CACHE =====
+.streamlit/secrets.toml
+.streamlit/.streamlitrc
