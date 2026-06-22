@@ -250,7 +250,7 @@ if uploaded:
         st.error(f"Failed to parse JSON: {e}")
 
 elif use_sample:
-    sample_path = 'data/sample_candidates.json'
+    sample_path = 'outputs/sample_candidates.json'
     if os.path.exists(sample_path):
         with open(sample_path) as f:
             candidates = json.load(f)
