@@ -1,0 +1,23 @@
+# Python virtual environments
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Local environments
+.env
+
+# Raw Datasets (Blocks the 464MB file)
+data/
+
+# Large Intermediate Caches (Blocks the 146MB and Parquet files)
+outputs/features.parquet
+outputs/embeddings.npy
+
+# Final Submission CSV (Keep local)
+outputs/submission.csv
+submission.csv
+
+# OS generated files
+.DS_Store
+Thumbs.db
