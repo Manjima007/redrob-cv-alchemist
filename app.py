@@ -19,6 +19,7 @@ FEATURE_COLS = [
     'open_to_work', 'github_score', 'profile_completeness',
     'notice_score', 'days_since_active', 'recency_score',
     'location_score',
+    'consulting_mult', 'research_mult', 'llm_tourist_mult', 'ic_mult', 'eval_score',
 ]
 
 
