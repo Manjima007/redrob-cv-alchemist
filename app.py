@@ -4,7 +4,7 @@ import pandas as pd
 import lightgbm as lgb
 import os
 import sys
-import requests
+import zipfile
 
 sys.path.append(os.path.dirname(__file__))
 from extract_features import extract_features
@@ -132,25 +132,28 @@ def generate_reasoning(row):
 
 @st.cache_resource
 def load_model():
-    model_path = 'outputs/ltr_model.txt'
-    if not os.path.exists(model_path):
-        return None
-        
-    # Git LFS Fix: Check if the file is just a tiny text pointer (usually < 500 bytes)
-    if os.path.getsize(model_path) < 1000:
-        # Fetch the actual large file from GitHub's media content server
-        raw_lfs_url = "https://media.githubusercontent.com/media/manjima007/redrob-cv-alchemist/main/outputs/ltr_model.txt"
-        try:
-            response = requests.get(raw_lfs_url)
-            response.raise_for_status() # Verify the download succeeded
-            # Overwrite the tiny pointer with the actual model data
-            with open(model_path, 'wb') as f:
-                f.write(response.content)
-        except Exception as e:
-            st.error(f"Failed to download the actual model from Git LFS: {e}")
+    model_txt = 'outputs/ltr_model.txt'
+    model_zip = 'outputs/ltr_model.zip'
+    
+    # If the text file doesn't exist, try to extract it from the zip
+    if not os.path.exists(model_txt):
+        if os.path.exists(model_zip):
+            try:
+                with zipfile.ZipFile(model_zip, 'r') as zip_ref:
+                    # Extract contents into the outputs folder
+                    zip_ref.extractall('outputs')
+            except Exception as e:
+                st.error(f"Failed to unzip model: {e}")
+                return None
+        else:
             return None
 
-    return lgb.Booster(model_file=model_path)
+    # Load the model directly from the extracted text file
+    try:
+        return lgb.Booster(model_file=model_txt)
+    except Exception as e:
+        st.error(f"Failed to load LightGBM model. The file might still be corrupted: {e}")
+        return None
 
 
 def score_candidates(candidates, model):
