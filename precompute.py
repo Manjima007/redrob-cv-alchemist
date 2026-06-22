@@ -60,6 +60,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--candidates', default='data/candidates.jsonl')
     parser.add_argument('--sample', action='store_true')
+    parser.add_argument('--skip-embeddings', action='store_true', help='Skip sentence-transformer embeddings (speeds up precompute)')
     args = parser.parse_args()
 
     # ── Skip re-streaming if features already exist ───────────────────────────
@@ -115,7 +116,9 @@ def main():
 
     # ── Optional: compute sentence-transformers embeddings if available ─────
     embeddings_path = 'outputs/embeddings.npy'
-    if os.path.exists(embeddings_path) and not args.sample:
+    if args.skip_embeddings:
+        print("Skipping embeddings (--skip-embeddings flag set)")
+    elif os.path.exists(embeddings_path) and not args.sample:
         print(f"Found existing {embeddings_path} — skipping embedding computation.")
         print("Delete outputs/embeddings.npy to recompute.")
     else:
