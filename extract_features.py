@@ -1,3 +1,4 @@
+import pandas as pd
 import re
 from datetime import date
 from disqualifier_detection import (detect_consulting_career, detect_research_only, 
@@ -235,20 +236,27 @@ def extract_features(candidate):
         profile.get('country', '')
     )
 
-    # ── Honeypot detection ───────────────────────────────────────────────────
+   # ── Honeypot detection (FIXED) ───────────────────────────────────────────────────
     honeypot_flag = 0
-    if total_months > yoe * 14:
+    
+    # 1. Fix the Concurrent Jobs trap: Only flag physically impossible timelines
+    # (e.g., Claiming 3x more combined months than their chronological YoE)
+    if total_months > (yoe * 36):
         honeypot_flag = 1
-    for s in skills:
-        if (s.get('proficiency') == 'expert' and
-                s.get('duration_months', 0) == 0 and
-                s.get('endorsements', 0) == 0):
-            honeypot_flag = 1
-            break
-    expert_count = sum(1 for s in skills
-                       if s.get('proficiency') in ['expert', 'advanced'])
-    if expert_count > 12:
+        
+    # 2. Fix the Expert Skills trap: Match the exact hackathon hint
+    # Count skills that are explicitly marked 'expert' BUT explicitly have 0 duration.
+    # We use -1 as the default so missing JSON keys are NOT treated as 0.
+    fake_expert_count = sum(
+        1 for s in skills 
+        if s.get('proficiency') == 'expert' 
+        and s.get('duration_months', -1) == 0
+    )
+    
+    # If they have 5+ of these physically impossible skills, it's a honeypot
+    if fake_expert_count >= 5:
         honeypot_flag = 1
+
 
     # temporal fields: earliest_job_start, company_founded_date, job_start_date
     earliest_dt = None

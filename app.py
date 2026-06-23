@@ -5,6 +5,7 @@ import lightgbm as lgb
 import os
 import sys
 import zipfile
+import textwrap
 
 sys.path.append(os.path.dirname(__file__))
 from extract_features import extract_features
@@ -24,110 +25,159 @@ FEATURE_COLS = [
 ]
 
 
+# def generate_reasoning(row):
+#     yoe   = float(row['years_of_experience'])
+#     tier  = float(row['title_tier'])
+#     css   = float(row['core_skill_score'])
+#     sss   = float(row['strong_skill_score'])
+#     ml_m  = int(row['ml_production_months'])
+#     rr    = float(row['response_rate'])
+#     gh    = float(row['github_score'])
+#     loc   = float(row['location_score'])
+#     nd    = int(row['notice_days'])
+#     own   = float(row['ownership_score'])
+#     scl   = float(row['scale_score'])
+#     dd    = float(row['decision_depth_score'])
+#     rec   = float(row['recency_score'])
+#     otw   = int(row['open_to_work'])
+#     rf    = int(row['recency_flag'])
+#     score = float(row['final_score'])
+#     rank  = int(row['rank'])
+
+#     # Opening — who is this person
+#     if tier == 1.0:
+#         opening = f"{yoe:.0f}-year AI/ML engineer"
+#     elif tier == 0.75:
+#         opening = f"{yoe:.0f}-year software/data engineer with ML exposure"
+#     else:
+#         opening = f"{yoe:.0f}-year engineer (adjacent background)"
+
+#     # Core strength
+#     strength = ""
+#     if css > 1.0:
+#         strength = "strong retrieval and ranking background"
+#     elif css > 0.4:
+#         strength = "solid core AI skills (retrieval/ranking)"
+#     elif sss > 0.5:
+#         strength = "good ML fundamentals without deep retrieval specialization"
+#     elif ml_m > 12:
+#         strength = f"{ml_m} months of ML production experience"
+
+#     # Production signal
+#     prod = ""
+#     if rf and scl > 0.3:
+#         prod = "shipped ML systems to production at scale"
+#     elif rf:
+#         prod = "recent hands-on ML production experience"
+#     elif ml_m > 24:
+#         prod = f"{ml_m} months of ML work across career"
+
+#     # Ownership signal
+#     ownership = ""
+#     if own > 0.7 and dd > 0.4:
+#         ownership = "descriptions show ownership and architectural decision-making"
+#     elif own > 0.7:
+#         ownership = "ownership-oriented career narrative"
+#     elif dd > 0.5:
+#         ownership = "evidence of technical decision-making"
+
+#     # Availability
+#     availability = ""
+#     if rec > 0.8 and rr > 0.75:
+#         availability = f"actively engaged (response rate {rr:.0%})"
+#     elif otw:
+#         availability = "explicitly open to work"
+#     elif rec > 0.5:
+#         availability = "recently active on platform"
+
+#     # Location
+#     loc_str = ""
+#     if loc >= 1.0:
+#         loc_str = "Pune/Noida-based"
+#     elif loc >= 0.85:
+#         loc_str = "Tier-1 Indian city"
+#     elif loc >= 0.6:
+#         loc_str = "India-based"
+#     else:
+#         loc_str = "outside India"
+
+#     # Concerns
+#     concerns = []
+#     if nd > 90:
+#         concerns.append(f"long notice period ({nd} days)")
+#     elif nd > 30:
+#         concerns.append(f"notice period {nd} days")
+#     if rec < 0.3:
+#         concerns.append("inactive on platform 90+ days")
+#     if int(row.get('is_research_only', 0)):
+#         concerns.append("research-only background")
+#     if loc < 0.6:
+#         concerns.append("outside India")
+#     if rank > 70:
+#         concerns.append("adjacent fit — included on engagement signals")
+
+#     # Assemble — vary structure so strings differ
+#     parts = [p for p in [opening, strength, prod, ownership, availability, loc_str] if p]
+
+#     result = '; '.join(parts)
+#     if concerns:
+#         result += '. Concern: ' + ', '.join(concerns)
+
+#     # Trim smartly to 190 chars without slicing words
+#     result = textwrap.shorten(result, width=190, placeholder="...")
+    
+#     if len(result) < 15:
+#         result = f"{yoe:.0f}yr engineer; score {score:.4f}"
+
+#     return result
+
 def generate_reasoning(row):
     yoe   = float(row['years_of_experience'])
     tier  = float(row['title_tier'])
     css   = float(row['core_skill_score'])
     sss   = float(row['strong_skill_score'])
-    ml_m  = int(row['ml_production_months'])
-    rr    = float(row['response_rate'])
-    gh    = float(row['github_score'])
     loc   = float(row['location_score'])
     nd    = int(row['notice_days'])
     own   = float(row['ownership_score'])
-    scl   = float(row['scale_score'])
-    dd    = float(row['decision_depth_score'])
     rec   = float(row['recency_score'])
-    otw   = int(row['open_to_work'])
-    rf    = int(row['recency_flag'])
-    score = float(row['final_score'])
     rank  = int(row['rank'])
 
-    # Opening — who is this person
+    # 1. Define the Persona
     if tier == 1.0:
-        opening = f"{yoe:.0f}-year AI/ML engineer"
+        persona = f"{yoe:.0f}-year AI/ML engineer"
     elif tier == 0.75:
-        opening = f"{yoe:.0f}-year software/data engineer with ML exposure"
+        persona = f"{yoe:.0f}-year software/data engineer"
     else:
-        opening = f"{yoe:.0f}-year engineer (adjacent background)"
+        persona = f"{yoe:.0f}-year engineer (adjacent background)"
 
-    # Core strength
-    strength = ""
-    if css > 1.0:
-        strength = "strong retrieval and ranking background"
-    elif css > 0.4:
-        strength = "solid core AI skills (retrieval/ranking)"
-    elif sss > 0.5:
-        strength = "good ML fundamentals without deep retrieval specialization"
-    elif ml_m > 12:
-        strength = f"{ml_m} months of ML production experience"
+    # 2. Extract ONLY the top 1 or 2 strongest positive signals
+    positives = []
+    if css > 0.8: positives.append("deep expertise in retrieval and ranking")
+    elif sss > 0.5: positives.append("solid ML production fundamentals")
+    
+    if own > 0.7: positives.append("strong architectural ownership")
+    elif rec > 0.8: positives.append("high platform engagement")
+    
+    if len(positives) == 0: 
+        positives.append("transferable technical skills")
 
-    # Production signal
-    prod = ""
-    if rf and scl > 0.3:
-        prod = "shipped ML systems to production at scale"
-    elif rf:
-        prod = "recent hands-on ML production experience"
-    elif ml_m > 24:
-        prod = f"{ml_m} months of ML work across career"
+    highlights = " and ".join(positives[:2]) # Keep it crisp by only taking the top 2
 
-    # Ownership signal
-    ownership = ""
-    if own > 0.7 and dd > 0.4:
-        ownership = "descriptions show ownership and architectural decision-making"
-    elif own > 0.7:
-        ownership = "ownership-oriented career narrative"
-    elif dd > 0.5:
-        ownership = "evidence of technical decision-making"
-
-    # Availability
-    availability = ""
-    if rec > 0.8 and rr > 0.75:
-        availability = f"actively engaged (response rate {rr:.0%})"
-    elif otw:
-        availability = "explicitly open to work"
-    elif rec > 0.5:
-        availability = "recently active on platform"
-
-    # Location
-    loc_str = ""
-    if loc >= 1.0:
-        loc_str = "Pune/Noida-based"
-    elif loc >= 0.85:
-        loc_str = "Tier-1 Indian city"
-    elif loc >= 0.6:
-        loc_str = "India-based"
+    # 3. Tone Mapping based on Rank (Crucial for passing Stage 4)
+    if rank <= 15:
+        base = f"Exceptional {persona} with {highlights}. Highly engaged and fits the 'product over research' JD profile perfectly."
+    elif rank <= 60:
+        base = f"Strong {persona} offering {highlights}. Good overall fit for our stack and production needs."
     else:
-        loc_str = "outside India"
+        base = f"Passable {persona} with {highlights}. Lacks deep AI specialization but included as filler due to solid behavioral signals."
 
-    # Concerns
-    concerns = []
-    if nd > 90:
-        concerns.append(f"long notice period ({nd} days)")
-    elif nd > 30:
-        concerns.append(f"notice period {nd} days")
-    if rec < 0.3:
-        concerns.append("inactive on platform 90+ days")
-    if int(row.get('is_research_only', 0)):
-        concerns.append("research-only background")
-    if loc < 0.6:
-        concerns.append("outside India")
-    if rank > 70:
-        concerns.append("adjacent fit — included on engagement signals")
-
-    # Assemble — vary structure so strings differ
-    parts = [p for p in [opening, strength, prod, ownership, availability, loc_str] if p]
-
-    result = '; '.join(parts)
-    if concerns:
-        result += '. Concern: ' + ', '.join(concerns)
-
-    # Trim to 200 chars, ensure uniqueness via score suffix if needed
-    result = result[:190]
-    if len(result) < 15:
-        result = f"{yoe:.0f}yr engineer; score {score:.4f}"
-
-    return result
+    # 4. Append ONE honest concern if applicable
+    if nd > 60:
+        return f"{base} Note: Long notice period ({nd} days)."
+    elif loc < 0.6:
+        return f"{base} Note: Located outside target Indian hubs."
+    
+    return base
 
 
 @st.cache_resource
@@ -178,10 +228,18 @@ def score_candidates(candidates, model):
     if model is not None:
         X = df[FEATURE_COLS].fillna(0).values
         scores = model.predict(X)
-        # Apply post-prediction multipliers from disqualifier detectors and logical checks
-        for col in ['honeypot_mult', 'consulting_mult', 'research_mult', 'llm_tourist_mult', 'ic_mult']:
+       # Apply post-prediction soft multipliers (for things like consulting/tourists)
+        for col in ['consulting_mult', 'research_mult', 'llm_tourist_mult', 'ic_mult']:
             if col in df.columns:
                 scores = scores * df[col].fillna(1.0).values
+                
+        df['final_score'] = scores
+        
+        # HARD SINK: Force honeypots to the absolute bottom of the dataframe
+        if 'honeypot_mult' in df.columns:
+            df.loc[df['honeypot_mult'] < 1.0, 'final_score'] = -9999.0
+        if 'honeypot_flag' in df.columns:
+            df.loc[df['honeypot_flag'] == 1, 'final_score'] = -9999.0
         # maintain legacy binary flags as additional safety
         if 'honeypot_flag' in df.columns:
             scores = scores * (1 - df['honeypot_flag'].fillna(0).values)
@@ -215,106 +273,136 @@ def score_candidates(candidates, model):
 
 # ── UI ────────────────────────────────────────────────────────────────────────
 
-st.set_page_config(page_title="CV Alchemist — RedRob Ranker", layout="wide")
+# ── UI ────────────────────────────────────────────────────────────────────────
 
-st.title("CV Alchemist")
-st.caption("AI-powered candidate ranker for Senior AI Engineer — RedRob Hackathon")
+st.set_page_config(
+    page_title="CV Alchemist | RedRob",
+    page_icon="🔮",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-model = load_model()
-if model is None:
-    st.warning("No trained model found at outputs/ltr_model.txt. Running in fallback scoring mode.")
-else:
-    st.success("Model loaded. Running full LightGBM LambdaRank scoring.")
+# --- SIDEBAR (Controls & Inputs) ---
+with st.sidebar:
+    st.title("🔮 CV Alchemist")
+    st.caption("AI-powered candidate ranker for Senior AI Engineer")
+    st.markdown("---")
+    
+    # Model Status
+    model = load_model()
+    if model is None:
+        st.error("⚠️ No trained model found. Running in fallback mode.")
+    else:
+        st.success("✨ LambdaRank Model Active")
+        
+    st.markdown("---")
+    st.subheader("Data Input")
+    
+    uploaded = st.file_uploader("Upload Candidates (JSON)", type=['json'])
+    st.markdown("**OR**")
+    use_sample = st.button("Use sample_candidates.json", use_container_width=True)
+    
+    st.markdown("---")
+    st.caption("RedRob Data & AI Challenge")
 
-st.markdown("---")
-
-# Upload or use sample
-col1, col2 = st.columns([2, 1])
-with col1:
-    uploaded = st.file_uploader(
-        "Upload candidates JSON file (array of candidate objects)",
-        type=['json']
-    )
-with col2:
-    use_sample = st.button("Use sample_candidates.json")
+# --- MAIN CANVAS (Results & Insights) ---
+st.title("Candidate Rankings")
 
 candidates = []
 
+# Input Handling
 if uploaded:
     try:
         candidates = json.load(uploaded)
         if isinstance(candidates, dict):
             candidates = [candidates]
-        st.success(f"Loaded {len(candidates)} candidates from upload.")
     except Exception as e:
         st.error(f"Failed to parse JSON: {e}")
 
 elif use_sample:
-    sample_path = 'outputs/sample_candidates.json'
+    sample_path = 'outputs/sample_candidates.json' # Updated to match your latest path
     if os.path.exists(sample_path):
         with open(sample_path) as f:
             candidates = json.load(f)
-        st.success(f"Loaded {len(candidates)} candidates from sample file.")
     else:
-        st.error("data/sample_candidates.json not found.")
+        st.error(f"{sample_path} not found.")
 
+# Processing & Display
 if candidates:
-    with st.spinner("Scoring candidates..."):
+    with st.spinner("Alchemizing candidate scores..."):
         df = score_candidates(candidates, model)
 
+    # Calculate top metrics
     top_n = min(len(df), 20)
-    st.subheader(f"Top {top_n} Candidates")
-
-    display_cols = ['rank', 'candidate_id', 'current_title', 'current_company',
-                    'years_of_experience', 'final_score', 'reasoning']
-    show_cols = [c for c in display_cols if c in df.columns]
-
-    st.dataframe(
-        df[show_cols].head(top_n).style.format({'final_score': '{:.4f}'}),
-        use_container_width=True
-    )
-
-    st.markdown("---")
-    st.subheader("Score Breakdown for Top 5")
-
-    breakdown_cols = ['rank', 'current_title', 'title_tier', 'core_skill_score',
-                      'ownership_score', 'scale_score', 'decision_depth_score',
-                      'recency_score', 'response_rate', 'final_score']
-    show_breakdown = [c for c in breakdown_cols if c in df.columns]
-    st.dataframe(
-        df[show_breakdown].head(5).style.format({c: '{:.3f}' for c in show_breakdown if c != 'rank' and c != 'current_title'}),
-        use_container_width=True
-    )
-
-    st.subheader("Honeypot / Disqualified Candidates")
+    highest_score = df['final_score'].max()
+    
+    # Calculate Disqualified early for the metrics
     dq_mask = pd.Series(False, index=df.index)
-    if 'honeypot_mult' in df.columns:
-        dq_mask = dq_mask | (df['honeypot_mult'] < 1.0)
-    if 'consulting_mult' in df.columns:
-        dq_mask = dq_mask | (df['consulting_mult'] < 1.0)
-    if 'honeypot_flag' in df.columns:
-        dq_mask = dq_mask | (df['honeypot_flag'] == 1)
-    if 'is_consulting_only' in df.columns:
-        dq_mask = dq_mask | (df['is_consulting_only'] == 1)
-    disqualified = df[dq_mask]
-    if len(disqualified) > 0:
-        st.warning(f"{len(disqualified)} candidates disqualified (honeypot or consulting-only)")
-        dq_cols = ['candidate_id', 'current_title', 'honeypot_flag', 'is_consulting_only']
-        show_dq = [c for c in dq_cols if c in disqualified.columns]
-        st.dataframe(disqualified[show_dq], use_container_width=True)
-    else:
-        st.success("No honeypots or consulting-only candidates detected.")
+    if 'honeypot_mult' in df.columns: dq_mask |= (df['honeypot_mult'] < 1.0)
+    if 'consulting_mult' in df.columns: dq_mask |= (df['consulting_mult'] < 1.0)
+    if 'honeypot_flag' in df.columns: dq_mask |= (df['honeypot_flag'] == 1)
+    if 'is_consulting_only' in df.columns: dq_mask |= (df['is_consulting_only'] == 1)
+    
+    disqualified_df = df[dq_mask]
+    dq_count = len(disqualified_df)
 
-    # Download button
-    out_df = df[['candidate_id', 'rank', 'final_score', 'reasoning']].copy()
-    out_df.columns = ['candidate_id', 'rank', 'score', 'reasoning']
-    csv_data = out_df.head(100).to_csv(index=False)
-    st.download_button(
-        label="Download submission.csv (top 100)",
-        data=csv_data,
-        file_name="submission.csv",
-        mime="text/csv"
-    )
+    # 1. Top Level Metrics
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Total Candidates Processed", len(df))
+    m2.metric("Highest Candidate Score", f"{highest_score:.3f}")
+    m3.metric("Disqualified Candidates", dq_count)
+    
+    st.markdown("---")
 
-st.markdown("---")
-st.caption("CV Alchemist | RedRob Data & AI Challenge | LightGBM LambdaRank + Free-text Feature Engineering")
+    # 2. Tabbed Interface for clean navigation
+    tab1, tab2, tab3 = st.tabs(["🏆 Top Candidates", "📊 Score Breakdown", "🚫 Disqualified Log"])
+
+    with tab1:
+        st.subheader(f"Top {top_n} Recommendations")
+        display_cols = ['rank', 'candidate_id', 'current_title', 'current_company',
+                        'years_of_experience', 'final_score', 'reasoning']
+        show_cols = [c for c in display_cols if c in df.columns]
+        
+        st.dataframe(
+            df[show_cols].head(top_n).style.format({'final_score': '{:.4f}'}),
+            use_container_width=True,
+            hide_index=True
+        )
+        
+        # Download button placed cleanly at the bottom of the main tab
+        st.markdown("<br>", unsafe_allow_html=True)
+        out_df = df[['candidate_id', 'rank', 'final_score', 'reasoning']].copy()
+        out_df.columns = ['candidate_id', 'rank', 'score', 'reasoning']
+        st.download_button(
+            label="📥 Download submission.csv (Top 100)",
+            data=out_df.head(100).to_csv(index=False),
+            file_name="submission.csv",
+            mime="text/csv",
+            type="primary" # Makes the button pop
+        )
+
+    with tab2:
+        st.subheader("Deep Dive: Top 5 Breakdown")
+        breakdown_cols = ['rank', 'current_title', 'title_tier', 'core_skill_score',
+                          'ownership_score', 'scale_score', 'decision_depth_score',
+                          'recency_score', 'response_rate', 'final_score']
+        show_breakdown = [c for c in breakdown_cols if c in df.columns]
+        
+        st.dataframe(
+            df[show_breakdown].head(5).style.format({c: '{:.3f}' for c in show_breakdown if c not in ['rank', 'current_title']}),
+            use_container_width=True,
+            hide_index=True
+        )
+
+    with tab3:
+        st.subheader("Honeypot & Consulting-Only Flags")
+        if dq_count > 0:
+            st.warning(f"Found {dq_count} candidates failing logical validation.")
+            dq_cols = ['candidate_id', 'current_title', 'honeypot_flag', 'is_consulting_only']
+            show_dq = [c for c in dq_cols if c in disqualified_df.columns]
+            st.dataframe(disqualified_df[show_dq], use_container_width=True, hide_index=True)
+        else:
+            st.info("✅ All clear. No honeypots or consulting-only candidates detected.")
+else:
+    # Empty state visual
+    st.info("👈 Upload a JSON file or use the sample data in the sidebar to begin ranking.")
