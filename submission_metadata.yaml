@@ -1,0 +1,96 @@
+# Redrob Hackathon — Submission Metadata Template
+#
+# Copy this file to your repo root as `submission_metadata.yaml` and fill it in.
+# The fields here should match what you submit via the portal at upload time.
+# Stage 3 review uses this file to verify your portal metadata.
+
+# ============================================================================
+# Team identity
+# ============================================================================
+team_name: "Team Bellpaper"  # Used in leaderboard and announcements
+
+primary_contact:
+  name: "Manjima Dutta"
+  email: "manjimadutta42@gmail.com"   
+  phone: "+91-9674063935"        
+
+team_members:
+  - name: "Manjima Dutta"
+    email: "manjimadutta42@gmail.com"
+    role: "Backend Engineer"          
+  - name: "Diptimayee Parta"
+    email: "diptimayeepatra07@gmail.com"
+    role: "ML Engineer"
+  - name: "Kinjal Dutta"
+    email: "kinjaldutta005@gmail.com"
+    role: "System Architect"
+
+# ============================================================================
+# Code and reproducibility
+# ============================================================================
+github_repo: "https://github.com/Manjima007/redrob-cv-alchemist"
+# Required. Must be reachable. Private repos OK if you can grant organizer
+# access at Stage 3 (the email to add will be communicated then).
+
+sandbox_link: "https://redrob-cv-alchemist-2w6r6sxfrvzw8zamsf3k5m.streamlit.app"
+# Required. A working hosted environment where the ranker can be run on a small
+# candidate sample. See Section 10.5 of submission_spec.md for acceptable
+# platforms (HuggingFace Spaces, Streamlit Cloud, Replit, Colab, Docker, Binder).
+
+reproduce_command: "python generate_submission.py --input candidates.jsonl --output team_submission.csv"
+# The single command that produces submission.csv from candidates.jsonl.
+# Should run end-to-end within 5 minutes on CPU with 16GB RAM and no network.
+
+# ============================================================================
+# Compute environment
+# ============================================================================
+compute:
+  platform: "AMD Ryzen 5 4600H with Radeon Graphics (3.00 GHz)"                    
+  cpu_cores: 8                                 
+  ram_gb: 8                                    
+  python_version: "3.11.4"                     
+  os: "Windows 11 Home Single Language"                             
+  uses_gpu_for_inference: false                 
+  has_network_during_ranking: false             
+  pre_computation_required: false              
+  pre_computation_time_minutes: ~ 4 minutes              
+
+# ============================================================================
+# AI tools declaration
+# ============================================================================
+# Transparency only — declared use is NOT penalized. Be honest. Stage 5 interview
+# may verify these declarations against your code; declarations that contradict
+# your code or your interview are flagged.
+ai_tools_used:
+  - "Claude"        
+  - "GitHub Copilot" 
+  - "Gemini"
+
+ai_usage_summary: |
+ - "Claude" was used for brainstorming and high-level design discussions, as well as for generating initial code snippets and documentation templates.
+  - "GitHub Copilot" was used to assist with code completion and boilerplate generation, particularly for repetitive tasks and standard library usage.
+  - "Gemini" was utilized for code review and optimization suggestions, helping to identify potential performance improvements and best practices.
+
+# ============================================================================
+# Approach summary (optional but recommended)
+# ============================================================================
+methodology_summary: |
+  ≤200 word summary of your approach. Strongly recommended.
+
+  Example:
+  "Rule-based ranker with explicit reasoning capture. Five scoring components
+  (skills, title+career, experience years, location, education) combined with
+  a multiplicative behavioral-signal modifier. The title component is the
+  decisive signal against keyword-stuffer traps; an endorsement-and-duration
+  trust multiplier on skills catches lazy keyword stuffing. Runtime is ~10
+  seconds for 50K candidates on CPU."
+
+# ============================================================================
+# Declarations
+# ============================================================================
+declarations:
+  read_submission_spec: true        # I have read submission_spec.md in full
+  code_is_original_work: true       # My code is my team's original work (using AI as a tool is fine)
+  no_collusion: true                # I have not coordinated my submission with other teams
+  honeypot_check_done: true         # OPTIONAL — set true if you explicitly checked for honeypots in your ranking
+  reproduction_tested: true         # I have tested that my reproduce_command runs end-to-end
